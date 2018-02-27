@@ -8,14 +8,17 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
-import android.widget.Toast;
 
+import com.zhuangfei.expandedittext.EditEntity;
 import com.zhuangfei.expandedittext.ExpandEditText;
+import com.zhuangfei.expandedittext.ImageEntity;
+import com.zhuangfei.expandedittext.listener.OnExpandImageClickListener;
 import com.zhuangfei.expandedittextdemo.tools.FileTools;
 import com.zhuangfei.expandedittextdemo.tools.ImageTools;
+import com.zhuangfei.expandedittext.utils.InputMethodUtils;
 import com.zhuangfei.expandedittextdemo.tools.ToastTools;
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener{
+public class MainActivity extends AppCompatActivity implements View.OnClickListener,OnExpandImageClickListener{
 
     ExpandEditText expandEditText;
 
@@ -38,16 +41,24 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         chooseButton = findViewById(R.id.id_choosebutton);
         getTextButton=findViewById(R.id.id_textbutton);
 
+        expandEditText.bind(this)
+                .setOnExpandImageClickListener(this);
+
         chooseButton.setOnClickListener(this);
         getTextButton.setOnClickListener(this);
     }
 
     private void operate() {
-        expandEditText.appendText("第一行文字");
-        expandEditText.appendDrawable(getResources().getDrawable(R.drawable.img2), "car");
+//        expandEditText.appendText("第一行文字");
+//        expandEditText.appendDrawable(getResources().getDrawable(R.drawable.img2), "car");
+//
+//        String text = expandEditText.getText();
+//        Toast.makeText(this, text, Toast.LENGTH_SHORT).show();
 
-        String text = expandEditText.getText();
-        Toast.makeText(this, text, Toast.LENGTH_SHORT).show();
+//        for(int i=1;i<=5;i++){
+//            EditEntity entity=expandEditText.createEditEntity();
+//            entity.getEditText().setText("第"+i+"个EditText");
+//        }
     }
 
     @Override
@@ -73,11 +84,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void onClick(View view) {
         switch (view.getId()){
             case R.id.id_choosebutton:
+                InputMethodUtils.close(MainActivity.this);
                 FileTools.chooseFiles(MainActivity.this,CODE_OPEN_IMAGE);
                 break;
             case R.id.id_textbutton:
                 ToastTools.show(MainActivity.this,expandEditText.getText());
                 break;
         }
+    }
+
+    @Override
+    public void onImageClick(View view, ImageEntity imageEntity) {
+        ToastTools.show(this,"url:"+imageEntity.getText());
     }
 }

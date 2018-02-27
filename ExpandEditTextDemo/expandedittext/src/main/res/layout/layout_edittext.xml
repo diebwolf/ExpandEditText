@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <EditText xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="wrap_content"
+    android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:textSize="16sp"
-    android:id="@+id/id_expand_edittext"
-    android:background="@android:color/transparent"/>
+    android:lineSpacingExtra="7dp"
+    android:background="@android:color/transparent"
+    android:id="@+id/id_expand_edittext"/>

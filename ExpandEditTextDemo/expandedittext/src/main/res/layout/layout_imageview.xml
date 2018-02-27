@@ -10,6 +10,8 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:background="@drawable/style_border_imageview"
+        android:layout_marginTop="5dp"
+        android:layout_marginBottom="5dp"
         android:padding="5dp"
         android:src="@drawable/img1"/>
 </LinearLayout>
