@@ -9,4 +9,6 @@ public class EntityType {
     public static int TYPE_EDIT=0;
 
     public static int TYPE_IMAGE=1;
+
+    public static int TYPE_TEXT=2;
 }

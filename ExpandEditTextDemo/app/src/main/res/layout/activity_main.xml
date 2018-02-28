@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@android:color/white"
+    android:background="@color/app_protect_eye"
     android:orientation="vertical">
 
     <TextView
@@ -58,7 +58,7 @@
             android:layout_height="45dp"
             android:layout_weight="1"
             android:clickable="true"
-            android:background="@android:color/transparent"
+            android:background="@drawable/ripple_button"
             android:text="获取文本" />
     </LinearLayout>
 

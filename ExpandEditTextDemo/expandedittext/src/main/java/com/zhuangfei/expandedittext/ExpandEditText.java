@@ -3,6 +3,7 @@ package com.zhuangfei.expandedittext;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.drawable.Drawable;
 import android.text.TextUtils;
 import android.util.AttributeSet;
@@ -13,7 +14,9 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 
+import com.zhuangfei.expandedittext.listener.OnExpandBuildListener;
 import com.zhuangfei.expandedittext.listener.OnExpandImageClickListener;
 import com.zhuangfei.expandedittext.utils.BitmapUtils;
 import com.zhuangfei.expandedittext.utils.DipUtils;
@@ -21,7 +24,6 @@ import com.zhuangfei.expandedittext.utils.EntityUtils;
 import com.zhuangfei.expandedittext.utils.InputMethodUtils;
 import com.zhuangfei.expandedittext.wrapper.DefaultImageWrapper;
 import com.zhuangfei.expandedittext.wrapper.ImageWrapper;
-import com.zhuangfei.expandedittext.wrapper.OriginalImageWrapper;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,17 +36,19 @@ public class ExpandEditText extends LinearLayout {
 
     private LayoutInflater mInflate;
 
-    private EditStyle editStyle;
-
     private List<BaseEntity> entityList;
 
     private Activity activity;
 
     private OnExpandImageClickListener onExpandImageClickListener;
 
+    private OnExpandBuildListener onExpandBuildListener;
+
     private ImageWrapper wrapper;
 
-    private boolean isOpenWrapper = true;
+    private String hintText = "";
+
+    private boolean isShowModel = false;
 
     public ExpandEditText(Context context) {
         this(context, null, 0);
@@ -63,6 +67,7 @@ public class ExpandEditText extends LinearLayout {
         mInflate = LayoutInflater.from(getContext());
         entityList = new ArrayList<>();
         addFocusListener();
+        createEditEntity(getEntityList().size());
     }
 
     public ExpandEditText bind(Activity activity) {
@@ -75,22 +80,29 @@ public class ExpandEditText extends LinearLayout {
         return this;
     }
 
+    public ExpandEditText setOnExpandBuildListener(OnExpandBuildListener onExpandBuildListener) {
+        this.onExpandBuildListener = onExpandBuildListener;
+        return this;
+    }
+
     public ExpandEditText setWrapper(ImageWrapper wrapper) {
         this.wrapper = wrapper;
         return this;
     }
 
-    public ExpandEditText setOpenWrapper(boolean openWrapper) {
-        isOpenWrapper = openWrapper;
+    public ExpandEditText setHintText(String hintText) {
+        this.hintText = hintText;
+        changeHint();
+        return this;
+    }
+
+    public ExpandEditText setShowModel(boolean showModel) {
+        isShowModel = showModel;
         return this;
     }
 
     public List<BaseEntity> getEntityList() {
         return entityList;
-    }
-
-    public EditStyle getEditStyle() {
-        return editStyle;
     }
 
     public void clear() {
@@ -103,16 +115,69 @@ public class ExpandEditText extends LinearLayout {
         return entityList.get(index);
     }
 
+    public ImageWrapper getWrapper() {
+        if(wrapper==null){
+            wrapper=new DefaultImageWrapper();
+        }
+        return wrapper;
+    }
+
+    public String getHintText() {
+        return hintText;
+    }
+
+    public boolean isShowModel() {
+        return isShowModel;
+    }
+
     public int indexOfEntity(BaseEntity entity) {
         return entityList.indexOf(entity);
     }
 
-    private void initWrapper() {
-        if (isOpenWrapper) {
-            if (wrapper == null) wrapper = new DefaultImageWrapper();
-        } else {
-            wrapper = new OriginalImageWrapper();
+    /**
+     * 将文本解析为图文混合
+     *
+     * @param text
+     */
+    public void load(String text) {
+        getWrapper().parse(this,text);
+    }
+
+    public ImageEntity parseImageEntity(String localPath) {
+        View view = mInflate.inflate(R.layout.layout_imageview, null, false);
+        addView(view);
+
+        ImageView imageView = view.findViewById(R.id.id_expand_imageview);
+        Bitmap bitmap = BitmapFactory.decodeFile(localPath);
+        Bitmap newBitmap = BitmapUtils.zoomAdapter(bitmap, getWidth() - DipUtils.dip2px(getContext(), 35));
+        imageView.setImageBitmap(newBitmap);
+        ImageEntity imageEntity = new ImageEntity(localPath, newBitmap, imageView);
+        entityList.add(imageEntity);
+        setOnImageListener(imageEntity);
+        return imageEntity;
+    }
+
+    /**
+     * 创建TextView
+     */
+    public TextEntity parseTextEntity() {
+        View view = mInflate.inflate(R.layout.layout_text, null, false);
+        TextView textView = view.findViewById(R.id.id_expand_text);
+        addView(textView);
+
+        if (onExpandBuildListener != null) {
+            onExpandBuildListener.onTextBuild(textView);
         }
+
+        TextEntity textEntity = new TextEntity(textView);
+        entityList.add(textEntity);
+        return textEntity;
+    }
+
+    public TextEntity parseTextEntity(String text) {
+        TextEntity textEntity=parseTextEntity();
+        textEntity.setText(text);
+        return textEntity;
     }
 
     /**
@@ -122,23 +187,28 @@ public class ExpandEditText extends LinearLayout {
      */
     public String getText() {
         String text = "";
-        initWrapper();
         for (BaseEntity entity : entityList) {
             if (entity.getType() == EntityType.TYPE_IMAGE) {
-                text += wrapper.getImageWrapper(entity.getText());
-            }else{
+                text += getWrapper().getImageWrapper(entity.getText());
+            } else {
                 text += entity.getText();
             }
-            text+="\n";
         }
 
         return text;
     }
 
-    public String getText(BaseEntity entity) {
-        if (entity == null) return null;
-        initWrapper();
-        return wrapper.getImageWrapper(entity.getText());
+    private int indexOfCursor() {
+        for (int i = 0; i < entityList.size(); i++) {
+            BaseEntity entity = entityList.get(i);
+            if (entity.getType() == EntityType.TYPE_EDIT) {
+                EditEntity editEntity = EntityUtils.getEditEntity(entity);
+                if (editEntity.getEditText().isFocused()) {
+                    return i;
+                }
+            }
+        }
+        return -1;
     }
 
     /**
@@ -146,8 +216,13 @@ public class ExpandEditText extends LinearLayout {
      *
      * @param bitmap
      */
-    public void insertBitmap(Bitmap bitmap) {
-
+    public void insertBitmap(Bitmap bitmap, String replace) {
+        int index = indexOfCursor();
+        if (index != -1) {
+            createImageEntity(null, bitmap, replace, index + 1);
+        } else {
+            appendBitmap(bitmap, replace);
+        }
     }
 
     /**
@@ -156,7 +231,7 @@ public class ExpandEditText extends LinearLayout {
      * @param bitmap
      */
     public void appendBitmap(Bitmap bitmap, String replace) {
-        createImageEntity(null, bitmap, replace);
+        createImageEntity(null, bitmap, replace, entityList.size());
     }
 
     /**
@@ -174,7 +249,7 @@ public class ExpandEditText extends LinearLayout {
      * @param drawable
      */
     public void appendDrawable(Drawable drawable, String replace) {
-        createImageEntity(drawable, null, replace);
+        createImageEntity(drawable, null, replace, entityList.size());
     }
 
     /**
@@ -184,10 +259,10 @@ public class ExpandEditText extends LinearLayout {
      * @param bitmap
      * @param replace
      */
-    public void createImageEntity(Drawable drawable, Bitmap bitmap, String replace) {
+    public ImageEntity createImageEntity(Drawable drawable, Bitmap bitmap, String replace, int index) {
         getFinalEditEntity();
         View view = mInflate.inflate(R.layout.layout_imageview, null, false);
-        addView(view);
+        addView(view, index);
 
         ImageView imageView = view.findViewById(R.id.id_expand_imageview);
         Bitmap newBitmap = null;
@@ -198,16 +273,21 @@ public class ExpandEditText extends LinearLayout {
         }
 
         if (bitmap != null) {
-            newBitmap = BitmapUtils.zoomAdapter(bitmap, getWidth() - DipUtils.dip2px(getContext(), 40));
+            newBitmap = BitmapUtils.zoomAdapter(bitmap, getWidth() - DipUtils.dip2px(getContext(), 35));
             imageView.setImageBitmap(newBitmap);
             imageEntity = new ImageEntity(replace, newBitmap, imageView);
         }
 
         if (imageEntity != null) {
-            entityList.add(imageEntity);
+            entityList.add(index,imageEntity);
             setOnImageListener(imageEntity);
-            createEditEntity();
+            createEditEntity(entityList.size());
         }
+
+        EditEntity afterEditEntity=getEditEntityAfter(index);
+        changeHint();
+        requestEditFocus(afterEditEntity);
+        return imageEntity;
     }
 
     private void setOnImageListener(final ImageEntity imageEntity) {
@@ -241,7 +321,7 @@ public class ExpandEditText extends LinearLayout {
      */
     public void appendText(String text) {
         EditEntity entity = getFinalEditEntity();
-        entity.setText(getText(entity) + text);
+        entity.setText(entity.getText() + text);
     }
 
     /**
@@ -257,10 +337,26 @@ public class ExpandEditText extends LinearLayout {
             if (entity.getType() == EntityType.TYPE_EDIT) {
                 resultEntity = (EditEntity) entity;
             } else {
-                resultEntity = createEditEntity();
+                resultEntity = createEditEntity(entityList.size());
             }
         } else {
-            resultEntity = createEditEntity();
+            resultEntity = createEditEntity(entityList.size());
+        }
+        return resultEntity;
+    }
+
+    public EditEntity getEditEntityAfter(int index) {
+        int size = entityList.size();
+        EditEntity resultEntity=null;
+        if(index>=(size-1)&&index>=0){
+            resultEntity=createEditEntity(size);
+        }else{
+            BaseEntity entity=entityList.get(index+1);
+            if(entity.getType()==EntityType.TYPE_EDIT){
+                resultEntity=EntityUtils.getEditEntity(entity);
+            }else{
+                resultEntity=createEditEntity(index+1);
+            }
         }
         return resultEntity;
     }
@@ -268,15 +364,22 @@ public class ExpandEditText extends LinearLayout {
     /**
      * 创建可编辑的实体
      */
-    public EditEntity createEditEntity() {
+    public EditEntity createEditEntity(int index) {
         View view = mInflate.inflate(R.layout.layout_edittext, null, false);
         EditText editText = view.findViewById(R.id.id_expand_edittext);
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
-        editText.setLayoutParams(lp);
-        addView(editText);
+        addView(editText,index);
+        if (entityList.size() == 0) {
+            editText.setHint(hintText);
+        }
+
+        if (onExpandBuildListener != null) {
+            onExpandBuildListener.onEditBuild(editText);
+        }
+
         EditEntity entity = new EditEntity(editText);
-        entityList.add(entity);
+        entityList.add(index,entity);
         setOnKeyListener(entity);
+        changeHint();
         return entity;
     }
 
@@ -316,7 +419,52 @@ public class ExpandEditText extends LinearLayout {
                 if (preEntity != null && EntityUtils.isEditEntity(preEntity)) {
                     Log.i("REMOVE", "remove editEntity...");
                     mergeEditEntity(entity, preEntity, index);
+                    EditEntity preEditEntity = EntityUtils.getEditEntity(preEntity);
                 }
+            }
+        }
+
+        changeHint();
+    }
+
+    public void changeHint() {
+        if (getText().isEmpty()) {
+            clearHint();
+            EditEntity entity = getFirstEditEntity();
+            entity.getEditText().setHint(hintText);
+        }
+    }
+
+    /**
+     * 获取第一个可编辑实体，如果不存在，则新建
+     *
+     * @return
+     */
+    public EditEntity getFirstEditEntity() {
+        int size = entityList.size();
+        EditEntity resultEntity = null;
+        if (size > 0) {
+            boolean isHaveEditEntity = false;
+            for (BaseEntity entity : entityList) {
+                if (entity.getType() == EntityType.TYPE_EDIT) {
+                    resultEntity = (EditEntity) entity;
+                    isHaveEditEntity = true;
+                    break;
+                }
+            }
+            if (!isHaveEditEntity) resultEntity = createEditEntity(0);
+        } else {
+            resultEntity = createEditEntity(entityList.size());
+        }
+        return resultEntity;
+    }
+
+    public void clearHint() {
+        //清除Hint
+        for (BaseEntity entity : entityList) {
+            if (entity.getType() == EntityType.TYPE_EDIT) {
+                EditEntity editEntity = EntityUtils.getEditEntity(entity);
+                editEntity.getEditText().setHint("");
             }
         }
     }
@@ -329,9 +477,9 @@ public class ExpandEditText extends LinearLayout {
      * @param entityIndex
      */
     public void mergeEditEntity(EditEntity entity, BaseEntity preEntity, int entityIndex) {
-        String value = getText(entity);
+        String value = entity.getText();
         EditEntity preEditEntity = EntityUtils.getEditEntity(preEntity);
-        String preValue = getText(preEditEntity);
+        String preValue = preEditEntity.getText();
 
         removeExpandViewAt(entityIndex);
         int start = 0;
@@ -353,6 +501,14 @@ public class ExpandEditText extends LinearLayout {
     public void requestFinalEditFocus() {
         EditEntity entity = getFinalEditEntity();
         EditText editText = entity.getEditText();
+        editText.setFocusable(true);
+        editText.setFocusableInTouchMode(true);
+        editText.requestFocus();
+        editText.findFocus();
+    }
+
+    public void requestEditFocus(EditEntity editEntity){
+        EditText editText = editEntity.getEditText();
         editText.setFocusable(true);
         editText.setFocusableInTouchMode(true);
         editText.requestFocus();

@@ -5,4 +5,4 @@
     android:textSize="16sp"
     android:gravity="center_vertical"
     android:background="@android:color/transparent"
-    android:id="@+id/id_expand_edittext"/>
+    android:id="@+id/id_expand_text"/>

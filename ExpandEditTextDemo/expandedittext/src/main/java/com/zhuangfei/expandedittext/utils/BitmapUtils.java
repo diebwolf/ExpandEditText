@@ -28,7 +28,7 @@ public class BitmapUtils {
         int height = bm.getHeight();
 
         float scale = 1;
-        if(width>newWidth){
+        if(width>(newWidth/3)){
             scale=((float) newWidth) / width;
             Matrix matrix = new Matrix();
             matrix.postScale(scale,scale);
