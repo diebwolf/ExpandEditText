@@ -65,7 +65,7 @@ public class ParseActivity extends AppCompatActivity implements OnExpandImageCli
 
         @Override
         protected String doInBackground(Void... voids) {
-            String result="图文混排的示例效果如下：";
+            String result="图文混排的示例效果如下：\n\n";
             for(int i=0;i<urlArray.length;i++){
                 result+="图片地址:"+urlArray[i];
                 result+="![img]("+urlArray[i]+")";
