@@ -1,15 +1,12 @@
 package com.zhuangfei.expandedittext.listener;
 
 import android.widget.EditText;
-import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.zhuangfei.expandedittext.EditEntity;
-import com.zhuangfei.expandedittext.ImageEntity;
-
-import org.w3c.dom.Text;
-
 /**
+ * 当构造EditText、TextView时会调用该接口
+ * 可以实现对其全局属性的设置
+ * 比如可以设置字体大小、颜色等属性
  * Created by Liu ZhuangFei on 2018/2/28.
  */
 

@@ -11,7 +11,7 @@
         android:layout_width="match_parent"
         android:layout_height="50dp"
         android:gravity="center"
-        android:text="图文混排示例"
+        android:text="图文编辑示例"
         android:textSize="17sp" />
 
     <TextView
@@ -53,13 +53,21 @@
             android:text="选择图片" />
 
         <Button
-            android:id="@+id/id_textbutton"
+            android:id="@+id/id_clearbutton"
             android:layout_width="0dp"
             android:layout_height="45dp"
             android:layout_weight="1"
             android:clickable="true"
             android:background="@drawable/ripple_button"
-            android:text="获取文本" />
+            android:text="清空" />
+        <Button
+            android:id="@+id/id_parsebutton"
+            android:layout_width="0dp"
+            android:layout_height="45dp"
+            android:layout_weight="1"
+            android:clickable="true"
+            android:background="@drawable/ripple_button"
+            android:text="解析示例" />
     </LinearLayout>
 
 

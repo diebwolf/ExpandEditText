@@ -1,4 +1,4 @@
-package com.zhuangfei.expandedittext;
+package com.zhuangfei.expandedittext.entity;
 
 /**
  * Created by Liu ZhuangFei on 2018/2/26.

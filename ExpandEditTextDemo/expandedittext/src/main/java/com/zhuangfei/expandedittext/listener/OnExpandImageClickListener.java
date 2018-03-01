@@ -2,7 +2,7 @@ package com.zhuangfei.expandedittext.listener;
 
 import android.view.View;
 
-import com.zhuangfei.expandedittext.ImageEntity;
+import com.zhuangfei.expandedittext.entity.ImageEntity;
 
 /**
  * Created by Liu ZhuangFei on 2018/2/27.

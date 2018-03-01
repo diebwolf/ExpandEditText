@@ -1,9 +1,9 @@
 package com.zhuangfei.expandedittext.utils;
 
-import com.zhuangfei.expandedittext.BaseEntity;
-import com.zhuangfei.expandedittext.EditEntity;
-import com.zhuangfei.expandedittext.EntityType;
-import com.zhuangfei.expandedittext.ImageEntity;
+import com.zhuangfei.expandedittext.entity.BaseEntity;
+import com.zhuangfei.expandedittext.entity.EditEntity;
+import com.zhuangfei.expandedittext.entity.EntityType;
+import com.zhuangfei.expandedittext.entity.ImageEntity;
 
 /**
  * Created by Liu ZhuangFei on 2018/2/26.

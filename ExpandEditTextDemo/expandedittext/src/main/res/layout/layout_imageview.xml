@@ -12,6 +12,5 @@
         android:background="@drawable/style_border_imageview"
         android:layout_marginTop="2dp"
         android:layout_marginBottom="2dp"
-        android:padding="3dp"
-        android:src="@drawable/img1"/>
+        android:padding="3dp"/>
 </LinearLayout>

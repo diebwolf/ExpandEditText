@@ -1,4 +1,4 @@
-package com.zhuangfei.expandedittext;
+package com.zhuangfei.expandedittext.entity;
 
 import android.widget.TextView;
 
